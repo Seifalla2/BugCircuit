@@ -1,0 +1,19 @@
+{
+  "name": "ct-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Persistent autonomous AI job runner with provider routing, checkpoints, and quota-aware recovery.",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/**/*.test.ts"
+  },
+  "engines": { "node": ">=22" },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
