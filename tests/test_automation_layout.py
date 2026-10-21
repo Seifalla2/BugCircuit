@@ -5,8 +5,8 @@ import pytest
 
 from bugcircuit.analyze import analyze
 from bugcircuit.automation import read_workflow
-from bugcircuit.layout import layout_events
 from bugcircuit.cli import main
+from bugcircuit.layout import layout_events
 
 
 def test_offline_workflow_findings():

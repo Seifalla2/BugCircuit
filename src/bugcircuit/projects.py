@@ -9,19 +9,18 @@ from __future__ import annotations
 import ast
 import json
 import os
-from pathlib import Path, PurePosixPath
 import re
 import secrets
 import shutil
 import subprocess
-from urllib.parse import urlsplit
+from pathlib import Path, PurePosixPath
 
 from .models import Event, Finding, Report
 
-GITHUB_RE = re.compile(r"^https://github\.com/([A-Za-z0-9-]{1,39})/([A-Za-z0-9_.-]{1,100})(?:\.git)?/?$", re.I)
+GITHUB_RE = re.compile(r"^https://github\.com/([A-Za-z0-9-]{1,39})/([A-Za-z0-9_.-]{1,100})(?:\.git)?/?$", re.IGNORECASE)
 PROJECT_ID_RE = re.compile(r"^[a-f0-9]{16}$")
 SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "dist", "build", ".next", ".nuxt", "target", "vendor", "coverage", "__pycache__", ".idea", ".cache"}
-NEVER_READ = re.compile(r"(^|/)(\.env(?:\..*)?|id_rsa|id_ed25519|.*\.(?:pem|key|p12|pfx|sqlite|db|log)|.*(?:secret|credential|token).*(?:\.json|\.ya?ml|\.txt))$", re.I)
+NEVER_READ = re.compile(r"(^|/)(\.env(?:\..*)?|id_rsa|id_ed25519|.*\.(?:pem|key|p12|pfx|sqlite|db|log)|.*(?:secret|credential|token).*(?:\.json|\.ya?ml|\.txt))$", re.IGNORECASE)
 CODE_SUFFIX = {".py", ".js", ".jsx", ".ts", ".tsx", ".php", ".go", ".rs"}
 MAX_PROJECTS = 40
 MAX_FILES = 700
@@ -146,7 +145,7 @@ class ProjectStore:
         raise ValueError("Project not found")
 
     def forget(self, identifier: str) -> bool:
-        entry = self.get(identifier)
+        self.get(identifier)  # Validate before modifying registry.
         self._save([p for p in self.list() if p["id"] != identifier])
         # Never delete a user's local clone. Managed copies also remain, to avoid data loss.
         return True
@@ -169,7 +168,6 @@ def audit_project(entry: dict) -> Report:
     truncated = len(eligible) > MAX_FILES
     eligible = eligible[:MAX_FILES]
     tracked = set(all_paths)
-    inspected = {name for _, name in eligible}
     events: list[Event] = []
     findings: list[Finding] = []
 

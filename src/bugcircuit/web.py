@@ -12,7 +12,6 @@ import re
 import secrets
 import threading
 import webbrowser
-from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -22,12 +21,15 @@ from . import __version__
 from .analyze import analyze
 from .automation import parse_workflow
 from .har import MAX_HAR_BYTES, parse_har
+from .local_ai import DEFAULT_PORT, INSTALLABLE_MODELS, pull_model
+from .local_ai import explain as explain_with_ollama
+from .local_ai import host as ollama_host
+from .local_ai import models as ollama_models
 from .models import Event
 from .otel import parse_otlp
 from .probe import ScopeError, inspect_url
-from .reporting import export_report
 from .projects import ProjectStore, audit_project, choose_local_folder
-from .local_ai import models as ollama_models, explain as explain_with_ollama, pull_model, INSTALLABLE_MODELS, host as ollama_host, DEFAULT_PORT
+from .reporting import export_report
 
 MAX_REQUEST_BYTES = MAX_HAR_BYTES + 2048  # The JSON envelope adds a small overhead.
 REPORT_ID = re.compile(r"^[a-f0-9]{16}$")
@@ -263,7 +265,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(self.rfile.read(size))
             if not isinstance(payload, dict):
-                raise ValueError("JSON object expected")
+                raise ValueError("JSON object expected")  # noqa: TRY004 - HTTP 400
             if self.path == "/api/ai/settings":
                 port = payload.get("port")
                 ollama_host(port)
@@ -276,7 +278,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/ai/download":
                 model = payload.get("model", "")
                 if not isinstance(model, str) or model not in INSTALLABLE_MODELS:
-                    raise ValueError("Choose an approved small coding model")
+                    raise ValueError("Choose an approved small coding model")  # noqa: TRY004 - HTTP 400
                 with self.server.model_install_lock:
                     if self.server.model_install["state"] == "downloading":
                         return self._error(HTTPStatus.CONFLICT, "A model download is already running")
@@ -360,7 +362,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.server.active_jobs -= 1
         except (ValueError, TypeError, ScopeError, UnicodeError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, str(exc)[:240])
-        except Exception:
+        except Exception:  # noqa: BLE001 - never expose unexpected internals
             # Do not expose stack traces, filesystem paths or unexpected internal details.
             self._error(HTTPStatus.INTERNAL_SERVER_ERROR, "Analysis could not be completed")
 
@@ -376,7 +378,7 @@ class Handler(BaseHTTPRequestHandler):
         if kind == "http":
             url = payload.get("url", "")
             if not isinstance(url, str) or len(url) > 2000:
-                raise ValueError("Valid URL required")
+                raise ValueError("Valid URL required")  # noqa: TRY004 - HTTP 400
             if payload.get("authorized") is not True:
                 raise ValueError("Confirm that you are authorized to inspect this URL")
             parsed = urlsplit(url)
@@ -386,7 +388,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError("Unsupported analysis mode")
         raw = payload.get("contents")
         if not isinstance(raw, str):
-            raise ValueError("Upload a UTF-8 JSON file")
+            raise ValueError("Upload a UTF-8 JSON file")  # noqa: TRY004 - HTTP 400
         max_bytes = {"har": MAX_HAR_BYTES, "workflow": 10 * 1024 * 1024,
                      "otel": 20 * 1024 * 1024}[kind]
         if len(raw.encode("utf-8")) > max_bytes:

@@ -6,17 +6,16 @@ pull, no local-file overwrites, no shell=True, no unauthenticated updater endpoi
 from __future__ import annotations
 
 import argparse
-import hashlib
 import http.client
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 from .web import data_root
 
@@ -62,9 +61,9 @@ def find_git() -> str | None:
 def trusted_remote(url: str) -> bool:
     """Require the documented GitHub owner/repo, never a substituted remote."""
     url = url.strip()
-    match = re.fullmatch(r"https://(?:[^@/]+@)?github\.com/([^\s/]+/[^\s/]+?)(?:\.git)?/?", url, re.I)
+    match = re.fullmatch(r"https://(?:[^@/]+@)?github\.com/([^\s/]+/[^\s/]+?)(?:\.git)?/?", url, re.IGNORECASE)
     if not match:
-        match = re.fullmatch(r"git@github\.com:([^\s/]+/[^\s/]+?)(?:\.git)?/?", url, re.I)
+        match = re.fullmatch(r"git@github\.com:([^\s/]+/[^\s/]+?)(?:\.git)?/?", url, re.IGNORECASE)
     return bool(match and match.group(1).lower() == EXPECTED_REPOSITORY)
 
 

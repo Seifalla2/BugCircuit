@@ -3,8 +3,8 @@
 import json
 import math
 from pathlib import Path
-from urllib.parse import urljoin
 from typing import Any
+from urllib.parse import urljoin
 
 from .models import Event
 from .redact import header_summary, query_names, safe_text, safe_url

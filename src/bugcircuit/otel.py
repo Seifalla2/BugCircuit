@@ -50,7 +50,7 @@ def read_otlp(path: Path) -> tuple[list[Event], list[str]]:
 def parse_otlp(data: object) -> tuple[list[Event], list[str]]:
     """Inspect decoded OTLP spans in memory, without persisting source payloads."""
     if not isinstance(data, dict) or not isinstance(data.get("resourceSpans"), list):
-        raise ValueError("Expected OTLP JSON object with resourceSpans array")
+        raise ValueError("Expected OTLP JSON object with resourceSpans array")  # noqa: TRY004 - stable CLI contract
     events = []
     for resource in data["resourceSpans"]:
         if not isinstance(resource, dict):

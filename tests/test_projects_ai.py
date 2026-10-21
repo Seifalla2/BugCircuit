@@ -3,13 +3,12 @@ import http.client
 import json
 import subprocess
 import threading
-from pathlib import Path
 
 import pytest
 
 from bugcircuit.analyze import analyze
 from bugcircuit.models import Event
-from bugcircuit.projects import ProjectStore, audit_project, _public_url
+from bugcircuit.projects import ProjectStore, _public_url, audit_project
 from bugcircuit.web import LocalServer
 
 
@@ -137,7 +136,7 @@ def test_project_web_flow(web_server, tmp_path):
 def test_cross_origin_cannot_connect_folder(web_server, tmp_path):
     repo = create_git_repo(tmp_path)
     srv = web_server
-    status, output = req(srv, "POST", "/api/projects/connect",
+    status, _output = req(srv, "POST", "/api/projects/connect",
                          {"mode": "folder", "path": str(repo)}, "https://untrusted.example")
     assert status == 403
     assert req(srv, "GET", "/api/projects")[1]["projects"] == []

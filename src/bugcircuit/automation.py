@@ -30,7 +30,7 @@ def read_workflow(path: Path) -> tuple[list[Event], list[str]]:
 def parse_workflow(data: object) -> tuple[list[Event], list[str]]:
     """Inspect decoded workflow exports in memory, discarding payloads."""
     if not isinstance(data, dict) or not isinstance(data.get("executions"), list):
-        raise ValueError("Expected JSON object with executions array")
+        raise ValueError("Expected JSON object with executions array")  # noqa: TRY004 - stable CLI contract
     if len(data["executions"]) > MAX_EXECUTIONS:
         raise ValueError("Workflow export exceeds 5000 executions")
     events = []

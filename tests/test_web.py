@@ -140,7 +140,7 @@ def test_loopback_binding_enforced(tmp_path):
 
 def test_update_status_and_manual_update_request(server, tmp_path, monkeypatch):
     monkeypatch.setenv("BUGCIRCUIT_DATA_DIR", str(tmp_path / "state" / "reports"))
-    from bugcircuit.updater import safe_status, request_path
+    from bugcircuit.updater import request_path, safe_status
     srv, _ = server
     safe_status(state="current", commit="abcdef01")
     status, payload = call(srv, "GET", "/api/update-status")
