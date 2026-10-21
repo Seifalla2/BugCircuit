@@ -50,3 +50,43 @@ def explain(report: dict, model: str) -> str:
     if not isinstance(answer, str) or not answer.strip():
         raise ValueError("The local model returned an empty response")
     return answer[:12000]
+
+
+# Approximate library download sizes; displayed before the user opts in.
+INSTALLABLE_MODELS = {"qwen2.5-coder:1.5b": 986, "qwen2.5-coder:3b": 1900}
+
+
+def pull_model(model: str, progress) -> None:
+    """Download only a fixed allowlisted model with an explicit user-triggered action.
+
+    All downloads are performed by the locally installed Ollama application.
+    No subprocess, shell invocation or remote endpoint is introduced here.
+    """
+    if model not in INSTALLABLE_MODELS:
+        raise ValueError("Only approved lightweight coding models can be installed")
+    request = Request(HOST + "/api/pull",
+                      data=json.dumps({"name": model, "stream": True}).encode("utf-8"),
+                      headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urlopen(request, timeout=180) as response:
+            complete = False
+            for chunk in response:
+                if len(chunk) > 64_000:
+                    raise ValueError("Ollama returned an oversized progress message")
+                value = json.loads(chunk)
+                if not isinstance(value, dict):
+                    continue
+                if value.get("error"):
+                    raise ValueError("Ollama reported a model download error")
+                status = str(value.get("status", "Downloading model"))[:100]
+                downloaded = value.get("completed", 0)
+                total = value.get("total", 0)
+                progress({"phase": status,
+                          "downloaded": downloaded if isinstance(downloaded, int) else 0,
+                          "total": total if isinstance(total, int) else 0})
+                if status.lower() == "success":
+                    complete = True
+            if not complete:
+                raise ValueError("Ollama did not confirm a completed download")
+    except (OSError, URLError, HTTPError, ValueError) as exc:
+        raise ValueError("Local Ollama download failed. Check the Ollama app, disk space and internet connection.") from exc

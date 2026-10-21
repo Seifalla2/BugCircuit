@@ -147,3 +147,26 @@ def test_ai_models_failure_has_no_cloud_fallback(monkeypatch):
     assert local_ai.models() == []
     with pytest.raises(ValueError):
         local_ai.explain({"findings": []}, "nonexistent:1b")
+
+
+def test_only_explicit_small_ai_model_downloads(monkeypatch):
+    from bugcircuit import local_ai
+    with pytest.raises(ValueError):
+        local_ai.pull_model("arbitrary:70b", lambda _: None)
+
+    class Response:
+        def __enter__(self):
+            return [b'{"status":"pulling manifest"}\n',
+                    b'{"status":"downloading digest","completed":15,"total":30}\n',
+                    b'{"status":"success"}\n']
+        def __exit__(self, *args):
+            pass
+    calls = []
+    def fake_urlopen(request, timeout):
+        assert request.full_url == "http://127.0.0.1:11434/api/pull"
+        assert json.loads(request.data)["name"] == "qwen2.5-coder:1.5b"
+        return Response()
+    monkeypatch.setattr(local_ai, "urlopen", fake_urlopen)
+    local_ai.pull_model("qwen2.5-coder:1.5b", calls.append)
+    assert calls[-1]["phase"] == "success"
+    assert calls[1]["downloaded"] == 15

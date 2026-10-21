@@ -27,7 +27,7 @@ from .otel import parse_otlp
 from .probe import ScopeError, inspect_url
 from .reporting import export_report
 from .projects import ProjectStore, audit_project, choose_local_folder
-from .local_ai import models as ollama_models, explain as explain_with_ollama
+from .local_ai import models as ollama_models, explain as explain_with_ollama, pull_model, INSTALLABLE_MODELS
 
 MAX_REQUEST_BYTES = MAX_HAR_BYTES + 2048  # The JSON envelope adds a small overhead.
 REPORT_ID = re.compile(r"^[a-f0-9]{16}$")
@@ -69,6 +69,8 @@ class LocalServer(ThreadingHTTPServer):
         self.reports_dir = (directory or data_root()).resolve()
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.projects = ProjectStore(self.reports_dir.parent)
+        self.model_install = {"state": "idle", "model": None, "phase": "", "downloaded": 0, "total": 0}
+        self.model_install_lock = threading.Lock()
         self.active_jobs = 0
         self.jobs_lock = threading.Lock()
         super().__init__(address, Handler)
@@ -170,6 +172,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(HTTPStatus.OK, result)
         if path == "/api/projects":
             return self._json(HTTPStatus.OK, {"projects": self.server.projects.list()})
+        if path == "/api/ai/download-status":
+            with self.server.model_install_lock:
+                status = dict(self.server.model_install)
+            return self._json(HTTPStatus.OK, status)
         if path == "/api/ai/models":
             return self._json(HTTPStatus.OK, {"models": ollama_models(), "provider": "ollama-local"})
         if path == "/api/reports":
@@ -202,7 +208,8 @@ class Handler(BaseHTTPRequestHandler):
         project_audit = re.fullmatch(r"/api/projects/([a-f0-9]{16})/audit", self.path)
         report_ai = re.fullmatch(r"/api/reports/([a-f0-9]{16})/ai", self.path)
         if self.path not in ("/api/analyze", "/api/demo", "/api/updates/check",
-                             "/api/projects/connect", "/api/projects/pick-folder") and not (project_audit or report_ai):
+                             "/api/projects/connect", "/api/projects/pick-folder",
+                             "/api/ai/download") and not (project_audit or report_ai):
             return self._error(HTTPStatus.NOT_FOUND, "Not found")
         try:
             size = int(self.headers.get("Content-Length", "-1"))
@@ -215,6 +222,33 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(size))
             if not isinstance(payload, dict):
                 raise ValueError("JSON object expected")
+            if self.path == "/api/ai/download":
+                model = payload.get("model", "")
+                if not isinstance(model, str) or model not in INSTALLABLE_MODELS:
+                    raise ValueError("Choose an approved small coding model")
+                with self.server.model_install_lock:
+                    if self.server.model_install["state"] == "downloading":
+                        return self._error(HTTPStatus.CONFLICT, "A model download is already running")
+                    self.server.model_install = {"state": "downloading", "model": model,
+                                                 "phase": "Contacting local Ollama",
+                                                 "downloaded": 0, "total": 0}
+                server = self.server
+                def worker():
+                    with server.jobs_lock:
+                        server.active_jobs += 1
+                    def update(fields):
+                        with server.model_install_lock:
+                            server.model_install.update(fields)
+                    try:
+                        pull_model(model, update)
+                        update({"state": "complete", "phase": "success"})
+                    except ValueError:
+                        update({"state": "failed", "phase": "Check Ollama and network"})
+                    finally:
+                        with server.jobs_lock:
+                            server.active_jobs -= 1
+                threading.Thread(target=worker, name="bugcircuit-ollama-download", daemon=True).start()
+                return self._json(HTTPStatus.ACCEPTED, {"started": True, "model": model})
             if self.path == "/api/projects/pick-folder":
                 choice = choose_local_folder()
                 return self._json(HTTPStatus.OK, {"path": choice})
