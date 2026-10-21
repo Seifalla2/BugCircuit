@@ -34,6 +34,9 @@ def parser() -> argparse.ArgumentParser:
     wf = commands.add_parser("analyze-workflow", help="Offline workflow execution export diagnostics")
     wf.add_argument("workflow", type=Path, help="JSON export of executions (see docs)")
     wf.add_argument("--out", type=Path, default=Path("bugcircuit-report"))
+    ot = commands.add_parser("analyze-otel", help="Offline OTLP JSON trace diagnostics")
+    ot.add_argument("otlp", type=Path)
+    ot.add_argument("--out", type=Path, default=Path("bugcircuit-report"))
     return p
 
 
@@ -47,6 +50,10 @@ def main(argv: list[str] | None = None) -> int:
             from .automation import read_workflow
             events, warnings = read_workflow(args.workflow)
             source = f"Workflow export: {args.workflow.name}"
+        elif args.command == "analyze-otel":
+            from .otel import read_otlp
+            events, warnings = read_otlp(args.otlp)
+            source = f"OTLP: {args.otlp.name}"
         elif args.command == "inspect":
             if not 0 <= args.max_redirects <= 10:
                 raise ValueError("--max-redirects must be between 0 and 10")

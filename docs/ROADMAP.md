@@ -11,9 +11,12 @@
 - Read-only browser DOM overflow checks at three viewports
 - Deterministic unit tests and synthetic fixtures
 
-## v0.3 — Candidate scope (not shipped)
+## v0.3 — Offline tracing support (implemented; integration validation pending)
+- OTLP JSON importer with allowlisted HTTP fields and span error evidence
+
+## v0.4 — Candidate scope (not shipped)
 - Import adapters for n8n/webhook exports
-- OpenTelemetry span import and correlation
+- Broader OpenTelemetry correlation and trace graph visualization
 - Headless browser end-to-end CI, regression fixtures
 - Signed release artifacts, repeatable dependency locks
 

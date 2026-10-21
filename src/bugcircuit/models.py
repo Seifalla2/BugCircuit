@@ -37,7 +37,7 @@ class Report:
     findings: list[Finding]
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     schema_version: str = "1.0"
-    tool_version: str = "0.2.0"
+    tool_version: str = "0.3.0"
     warnings: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:

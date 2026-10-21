@@ -70,6 +70,12 @@ def analyze(events: list[Event], source: str, warnings: list[str] | None = None)
                 "Browser runtime reported a JavaScript exception.", [ev.id],
                 ["Use the sanitized console message and a source map to locate the error.", "Add a regression test for the failing interaction."],
                 "Browser JavaScript error"))
+        elif ev.kind == "span":
+            findings.append(_finding("OTEL_SPAN_FAILURE", "medium", "high",
+                "A traced operation was marked ERROR by instrumentation; investigate correlated server logs.",
+                [ev.id], ["Use backend traces to inspect the parent span and exception details.",
+                          "Check upstream dependencies and deployment versions."],
+                "OpenTelemetry span error"))
         elif ev.kind == "requestfailed":
             findings.append(_finding("BROWSER_NETWORK_FAILURE", "medium", "medium",
                 "Browser reported a failed network request, without a confirmed server response.", [ev.id],

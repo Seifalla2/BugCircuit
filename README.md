@@ -5,9 +5,9 @@
 [![Tests](https://github.com/Seifalla2/BugCircuit/actions/workflows/test.yml/badge.svg)](https://github.com/Seifalla2/BugCircuit/actions/workflows/test.yml)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab)
 ![License](https://img.shields.io/badge/license-MIT-4c1)
-![Status](https://img.shields.io/badge/status-v0.2%20alpha-orange)
+![Status](https://img.shields.io/badge/status-v0.3%20alpha-orange)
 
-> **Status: v0.2 alpha** — functioning CLI and report generator, not yet proven in real-world deployments. The GitHub CI badge becomes meaningful only after publishing the repo and running the workflow.
+> **Status: v0.3 alpha** — functioning CLI and report generator, not yet proven in real-world deployments. The GitHub CI status is unverified while hosted runners are unavailable in the private repository.
 
 BugCircuit imports an existing HTTP Archive (HAR), probes an authorized URL with bounded HTTP GET requests, or optionally observes a single page through Playwright. A deterministic rules engine links errors to evidence IDs and produces portable HTML and JSON reports. It **does not use an LLM, run aggressive scans, collect credentials, or apply fixes automatically**.
 
@@ -54,6 +54,16 @@ optional `trigger_id`, `duration_ms`, `timestamp`, and `error`. Payloads are ign
 Trigger IDs are hashed for duplicate detection; repeated success for the same fingerprint
 is a **signal for investigation**, not proof of duplicate external side effects.
 
+**OpenTelemetry trace example (offline, synthetic):**
+
+```bash
+bugcircuit analyze-otel examples/otel-errors.json --out ./otel-report
+```
+
+The OTLP importer accepts JSON `resourceSpans` / `scopeSpans` / `spans`,
+retains only HTTP status/method/url metadata and explicit ERROR status,
+and discards trace IDs, span links, arbitrary attributes and event payloads.
+
 **Other supported commands:**
 
 ```bash
@@ -80,7 +90,7 @@ You can also run `python -m bugcircuit` after installing.
 ### Example result
 
 ```text
-BugCircuit v0.2.0 • 2 events • 2 findings
+BugCircuit v0.3.0 • 2 events • 2 findings
 [HIGH] AUTH_CALLBACK_FAILED: Authentication callback failed
 [HIGH] OAUTH_STATE_MISMATCH: OAuth state mismatch observed
 JSON: .../report/report.json
@@ -120,6 +130,7 @@ src/bugcircuit/
   analyze.py     evidence-backed findings
   reporting.py   static offline report generation
   automation.py  offline workflow execution importer
+  otel.py        bounded offline OTLP JSON span importer
   layout.py      read-only rendered DOM overflow checks
 examples/        synthetic fixtures only
 tests/           isolated unit and integration-like CLI tests
@@ -140,7 +151,7 @@ See [Security Policy](SECURITY.md) and [Threat Model](docs/SECURITY_MODEL.md).
 - CORS cannot be proven from an HTTP response alone; requires browser-observed error text.
 - OAuth callback errors provide directions for investigation; they do not reveal server-side session state.
 - The tool does not instrument private backends, inspect server logs or obtain traces from inaccessible services.
-- Source maps, workflow graphs, UI screenshots and automated root-cause remediation are **not** part of v0.1.
+- Source maps, workflow graphs, UI screenshots and automated root-cause remediation are **not** part of v0.3.
 - Tests use deterministic fixtures and mocks; production browser compatibility and large-trace benchmarks remain open validation work.
 
 ## Development
