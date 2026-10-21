@@ -14,7 +14,7 @@
 ## v0.3 — Offline tracing support (implemented; integration validation pending)
 - OTLP JSON importer with allowlisted HTTP fields and span error evidence
 
-## v0.4 — Candidate scope (not shipped)
+## v0.4 — Earlier planning scope (superseded by current v0.5.2 alpha)
 - Import adapters for n8n/webhook exports
 - Broader OpenTelemetry correlation and trace graph visualization
 - Headless browser end-to-end CI, regression fixtures
@@ -26,5 +26,4 @@
 - Cross-platform and Chromium compatibility verification
 - Benchmark datasets, public changelog and release automation
 
-Private repository remains private until user explicitly requests publication.
-Do not claim feature coverage or production readiness without tests.
+The repository is public as of the v0.5.2 alpha review. A synthetic-only portfolio showcase exists, but public visibility does not mean production certification. Do not claim feature coverage or production readiness without tests.
