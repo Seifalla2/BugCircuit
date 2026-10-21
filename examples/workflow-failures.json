@@ -1,0 +1,5 @@
+{"executions":[
+ {"id":"a1","workflow":"lead-sync","trigger_id":"demo-lead-42","status":"success","duration_ms":180,"timestamp":"2026-10-21T08:01:01Z"},
+ {"id":"a2","workflow":"lead-sync","trigger_id":"demo-lead-42","status":"success","duration_ms":220,"timestamp":"2026-10-21T08:01:02Z"},
+ {"id":"a3","workflow":"lead-sync","trigger_id":"demo-lead-91","status":"timeout","duration_ms":10000,"error":"upstream timeout"}
+]}
