@@ -1,8 +1,6 @@
 # Release and public-visibility checklist
 
-The canonical repository is **Seifalla2/BugCircuit**. It already exists on
-GitHub and must remain **private** until the owner explicitly changes its
-visibility. Do not reinitialize Git or attempt to push an unrelated history.
+The canonical repository is **Seifalla2/BugCircuit** and is already **public**. The source and existing Git history are visible. Do not claim private/proprietary backend protection for code in this repository. Do not reinitialize Git or force-push unrelated history.
 
 ## Before the first public release
 
