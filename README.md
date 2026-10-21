@@ -11,6 +11,14 @@
 
 BugCircuit imports an existing HTTP Archive (HAR), probes an authorized URL with bounded HTTP GET requests, or optionally observes a single page through Playwright. A deterministic rules engine links errors to evidence IDs and produces portable HTML and JSON reports. The deterministic analysis works without an LLM. An **optional local Ollama model** can explain sanitized findings. It does not run aggressive scans, collect credentials, or apply fixes automatically.
 
+### Portfolio showcase (synthetic data only)
+
+Start the local dashboard, then open **[the Showcase view](http://127.0.0.1:8765/showcase)**. It is a separate, responsive presentation designed for screen-sharing and screenshots. The three example scenarios (OAuth, API failures and workflow interruption) are produced by the real deterministic rule engine from **fictional inputs**. No connected repositories, saved reports, local file paths, model settings or customer data are requested by this view. The showcase endpoint does not write a report to disk.
+
+The private owner workspace remains at `http://127.0.0.1:8765/`. **Do not screen-share the owner workspace with connected private repositories or real client reports open.** The portfolio page is *not* a separate hosted service or an authentication boundary: anyone using the unlocked laptop can navigate to the local workspace. Never publish port 8765 to the internet.
+
+**Source visibility:** This GitHub repository is publicly visible and MIT-licensed. All code committed here, including the Python engine, is accessible. UI hiding, JavaScript minification, and removing files from current commits cannot make already-published source private. A proprietary core would need a distinct private repository and a documented distribution/API boundary; review prior releases and license obligations before any migration.
+
 ### Why it exists
 
 Debugging often begins with vague messages like “login failed” or “the server is down.” BugCircuit focuses on the evidence you actually have:
