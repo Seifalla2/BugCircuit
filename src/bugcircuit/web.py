@@ -27,7 +27,7 @@ from .otel import parse_otlp
 from .probe import ScopeError, inspect_url
 from .reporting import export_report
 from .projects import ProjectStore, audit_project, choose_local_folder
-from .local_ai import models as ollama_models, explain as explain_with_ollama, pull_model, INSTALLABLE_MODELS
+from .local_ai import models as ollama_models, explain as explain_with_ollama, pull_model, INSTALLABLE_MODELS, host as ollama_host, DEFAULT_PORT
 
 MAX_REQUEST_BYTES = MAX_HAR_BYTES + 2048  # The JSON envelope adds a small overhead.
 REPORT_ID = re.compile(r"^[a-f0-9]{16}$")
@@ -69,6 +69,15 @@ class LocalServer(ThreadingHTTPServer):
         self.reports_dir = (directory or data_root()).resolve()
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.projects = ProjectStore(self.reports_dir.parent)
+        # Settings are durable and separate from the GitHub clone and reports.
+        self.ai_config_path = self.reports_dir.parent / "local-ai.json"
+        self.ai_port = DEFAULT_PORT
+        try:
+            loaded = json.loads(self.ai_config_path.read_text(encoding="utf-8"))
+            self.ai_port = int(loaded["port"])
+            ollama_host(self.ai_port)
+        except (OSError, ValueError, KeyError, TypeError):
+            self.ai_port = DEFAULT_PORT
         self.model_install = {"state": "idle", "model": None, "phase": "", "downloaded": 0, "total": 0}
         self.model_install_lock = threading.Lock()
         self.active_jobs = 0
@@ -177,7 +186,10 @@ class Handler(BaseHTTPRequestHandler):
                 status = dict(self.server.model_install)
             return self._json(HTTPStatus.OK, status)
         if path == "/api/ai/models":
-            return self._json(HTTPStatus.OK, {"models": ollama_models(), "provider": "ollama-local"})
+            installed = ollama_models(self.server.ai_port)
+            return self._json(HTTPStatus.OK, {"models": installed, "provider": "ollama-local",
+                                               "port": self.server.ai_port,
+                                               "endpoint": ollama_host(self.server.ai_port)})
         if path == "/api/reports":
             reports = self._list_reports()
             return self._json(HTTPStatus.OK, {"reports": reports, "total": len(reports)})
@@ -209,7 +221,7 @@ class Handler(BaseHTTPRequestHandler):
         report_ai = re.fullmatch(r"/api/reports/([a-f0-9]{16})/ai", self.path)
         if self.path not in ("/api/analyze", "/api/demo", "/api/updates/check",
                              "/api/projects/connect", "/api/projects/pick-folder",
-                             "/api/ai/download") and not (project_audit or report_ai):
+                             "/api/ai/download", "/api/ai/settings") and not (project_audit or report_ai):
             return self._error(HTTPStatus.NOT_FOUND, "Not found")
         try:
             size = int(self.headers.get("Content-Length", "-1"))
@@ -222,6 +234,15 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(size))
             if not isinstance(payload, dict):
                 raise ValueError("JSON object expected")
+            if self.path == "/api/ai/settings":
+                port = payload.get("port")
+                ollama_host(port)
+                if self.server.model_install["state"] == "downloading":
+                    return self._error(HTTPStatus.CONFLICT, "Wait for the current model download")
+                self.server.ai_config_path.write_text(json.dumps({"port": port}), encoding="utf-8")
+                self.server.ai_port = port
+                return self._json(HTTPStatus.OK, {"port": port, "endpoint": ollama_host(port),
+                                                  "models": ollama_models(port)})
             if self.path == "/api/ai/download":
                 model = payload.get("model", "")
                 if not isinstance(model, str) or model not in INSTALLABLE_MODELS:
@@ -240,7 +261,7 @@ class Handler(BaseHTTPRequestHandler):
                         with server.model_install_lock:
                             server.model_install.update(fields)
                     try:
-                        pull_model(model, update)
+                        pull_model(model, update, server.ai_port)
                         update({"state": "complete", "phase": "success"})
                     except ValueError:
                         update({"state": "failed", "phase": "Check Ollama and network"})
@@ -282,7 +303,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.server.active_jobs += 1
                 try:
                     result = explain_with_ollama(json.loads(file.read_text(encoding="utf-8")),
-                                                 payload.get("model", ""))
+                                                 payload.get("model", ""), self.server.ai_port)
                     return self._json(HTTPStatus.OK, {"analysis": result, "provider": "ollama-local",
                                                       "warning": "AI suggestions are unverified; no source files were sent."})
                 finally:

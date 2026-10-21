@@ -4,6 +4,8 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from . import __version__
+
 
 @dataclass
 class Event:
@@ -37,7 +39,7 @@ class Report:
     findings: list[Finding]
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     schema_version: str = "1.0"
-    tool_version: str = "0.5.1"
+    tool_version: str = field(default_factory=lambda: __version__)
     warnings: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:

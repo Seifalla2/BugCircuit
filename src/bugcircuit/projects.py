@@ -6,6 +6,7 @@ No repository code, package script, Git hook, or plugin is ever executed here.
 """
 from __future__ import annotations
 
+import ast
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -205,34 +206,65 @@ def audit_project(entry: dict) -> Report:
              "No conventional continuous-integration configuration was found.",
              ["No known CI config"], ["Add automated checks before merges if the project needs CI."])
 
-    patterns = [
-        ("REPO_TLS_VERIFICATION_DISABLED", re.compile(r"\bverify\s*=\s*False\b"), "TLS verification disabled", "medium", "Review any request made with verify=False."),
-        ("REPO_SUBPROCESS_SHELL", re.compile(r"\bshell\s*=\s*True\b"), "Shell command execution", "medium", "Verify command arguments never come from untrusted input."),
-        ("REPO_DEBUG_ENABLED", re.compile(r"\bDEBUG\s*=\s*True\b"), "Debug mode enabled in source", "low", "Check whether this setting is used in production."),
-    ]
-    counts = {code: [] for code, *_ in patterns}
+    # Python AST matching avoids treating documentation, regexes and comments as
+    # executable code. Test fixtures are excluded because they deliberately contain
+    # bad examples; audit_project() still reports the total tracked file count.
+    pattern_metadata = {
+        "REPO_TLS_VERIFICATION_DISABLED": ("TLS verification disabled", "medium", "Review the call made with verify=False and use certificate validation."),
+        "REPO_SUBPROCESS_SHELL": ("Shell command execution", "medium", "Verify shell=True is necessary and arguments cannot be influenced by untrusted input."),
+        "REPO_DEBUG_ENABLED": ("Debug mode enabled in source", "low", "Check whether DEBUG=True is enabled in production."),
+    }
+    counts = {code: [] for code in pattern_metadata}
     scanned = 0
+    skipped_tests = 0
+
+    def is_test_source(name: str) -> bool:
+        parts = PurePosixPath(name).parts
+        basename = parts[-1].lower()
+        return (any(part.lower() in {"tests", "test", "__tests__", "spec", "specs", "fixtures"}
+                    for part in parts[:-1])
+                or basename.startswith("test_") or basename.endswith("_test.py"))
+
     for path, name in eligible:
-        if NEVER_READ.search(name) or path.suffix.lower() not in CODE_SUFFIX:
+        if NEVER_READ.search(name) or path.suffix.lower() != ".py":
+            continue
+        if is_test_source(name):
+            skipped_tests += 1
             continue
         try:
             if path.stat().st_size > MAX_TEXT:
                 continue
             content = path.read_text(encoding="utf-8", errors="replace")
+            tree = ast.parse(content, filename=name)
             scanned += 1
-        except OSError:
+        except (OSError, SyntaxError, ValueError):
             continue
-        for code, regex, *_ in patterns:
-            if regex.search(content) and len(counts[code]) < 5:
+        observed = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                for keyword in node.keywords:
+                    if keyword.arg == "verify" and isinstance(keyword.value, ast.Constant) and keyword.value.value is False:
+                        observed.add("REPO_TLS_VERIFICATION_DISABLED")
+                    if keyword.arg == "shell" and isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
+                        observed.add("REPO_SUBPROCESS_SHELL")
+            elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+                value = node.value
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                if (isinstance(value, ast.Constant) and value.value is True
+                        and any(isinstance(t, ast.Name) and t.id == "DEBUG" for t in targets)):
+                    observed.add("REPO_DEBUG_ENABLED")
+        for code in observed:
+            if len(counts[code]) < 5:
                 counts[code].append(name)
-    for code, _, title, severity, check in patterns:
+    for code, (title, severity, check) in pattern_metadata.items():
         if counts[code]:
             note(code, title, severity,
-                 "A potentially risky pattern appears in source. Static matches can be comments or tests; this is not proof of a vulnerability.",
+                 "Python AST identified an executable-code pattern. Inspect its context before treating it as a vulnerability.",
                  counts[code], [check])
     warnings = ["Read-only static audit of tracked files. No code executed; no dependencies installed.",
                 "Findings are heuristics, not confirmed exploitable vulnerabilities.",
-                f"Inspected {len(eligible)} tracked files; read {scanned} bounded source files (sensitive files excluded)."]
+                f"Inspected {len(eligible)} tracked files; AST-parsed {scanned} Python source files; skipped {skipped_tests} test Python files.",
+                "These code-pattern rules only cover Python; no security verdict is provided for JavaScript, TypeScript, PHP or other languages."]
     if truncated:
         warnings.append(f"Only the first {MAX_FILES} eligible files were considered; results are incomplete.")
     return Report(source="Repository audit: " + entry["name"], events=events,

@@ -57,8 +57,9 @@ def export_report(report: Report, output: Path) -> tuple[Path, Path]:
     <h2>Findings</h2>__CARDS__<h2>Evidence timeline</h2><div class="table"><table>
     <thead><tr><th>ID</th><th>Type</th><th>Method</th><th>HTTP</th><th>URL</th><th>Error</th></tr></thead>
     <tbody>__ROWS__</tbody></table></div><h2>Warnings &amp; limitations</h2><div class="notice"><ul>__WARNINGS__</ul></div>
-    <p class="foot">BugCircuit v0.4 · Heuristic rules are not proof of root cause. No automatic repairs.</p></main></body></html>'''
+    <p class="foot">BugCircuit v__TOOL_VERSION__ · Heuristic rules are not proof of root cause. No automatic repairs.</p></main></body></html>'''
     replacements = {
+        "__TOOL_VERSION__": html.escape(report.tool_version),
         "__SOURCE__": html.escape(report.source), "__DATE__": html.escape(report.generated_at),
         "__EVENTS__": str(len(report.events)), "__FINDINGS__": str(len(report.findings)),
         "__HIGH__": str(sum(1 for f in report.findings if f.severity == "high")),

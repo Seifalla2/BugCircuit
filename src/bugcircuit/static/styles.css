@@ -20,3 +20,5 @@
 .ai-output{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:13px;line-height:1.8;background:#0a1020;border:1px solid #37425a;border-radius:10px;padding:18px;max-height:600px;overflow:auto}
 html[dir=rtl] .local-ai-panel{text-align:right}
 @media(max-width:720px){.project-actions{width:100%;justify-content:flex-end}.local-ai-actions select{flex:1}}
+
+#ai-port{width:90px;min-width:80px;background:#0c1426;color:#f0f3ff;border:1px solid #36435e;border-radius:9px;padding:10px;direction:ltr;text-align:center}.local-ai-actions label{font-size:12px;color:#aebbd1}

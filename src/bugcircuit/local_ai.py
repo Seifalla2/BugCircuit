@@ -8,21 +8,28 @@ import re
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-HOST = "http://127.0.0.1:11434"
+DEFAULT_PORT = 11434
+
+
+def host(port: int = DEFAULT_PORT) -> str:
+    """A local port only; never accept arbitrary URLs or remote hosts."""
+    if isinstance(port, bool) or not isinstance(port, int) or not 1024 <= port <= 65535:
+        raise ValueError("Ollama port must be between 1024 and 65535")
+    return f"http://127.0.0.1:{port}"
 MODEL_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.:/-]{0,110}$")
 
 
-def models() -> list[str]:
+def models(port: int = DEFAULT_PORT) -> list[str]:
     try:
-        with urlopen(HOST + "/api/tags", timeout=2) as response:
+        with urlopen(host(port) + "/api/tags", timeout=2) as response:
             items = json.load(response).get("models", [])
         return [m["name"] for m in items if isinstance(m, dict) and isinstance(m.get("name"), str)][:50]
     except (OSError, URLError, ValueError, KeyError):
         return []
 
 
-def explain(report: dict, model: str) -> str:
-    if not isinstance(model, str) or not MODEL_RE.fullmatch(model) or model not in models():
+def explain(report: dict, model: str, port: int = DEFAULT_PORT) -> str:
+    if not isinstance(model, str) or not MODEL_RE.fullmatch(model) or model not in models(port):
         raise ValueError("Select an installed local Ollama model in the AI panel")
     # Only structured, non-sensitive finding descriptions are sent. No source text.
     findings = report.get("findings", [])[:30]
@@ -37,7 +44,7 @@ def explain(report: dict, model: str) -> str:
               "issues and do not include credential requests. Reply in the user's language "
               "if possible. This response is advisory only.\nFINDINGS_JSON:\n"
               + json.dumps(compact, ensure_ascii=False)[:11000])
-    req = Request(HOST + "/api/generate",
+    req = Request(host(port) + "/api/generate",
                   data=json.dumps({"model": model, "prompt": prompt, "stream": False,
                                    "options": {"num_predict": 650, "temperature": 0.2}}).encode(),
                   headers={"Content-Type": "application/json"}, method="POST")
@@ -56,7 +63,7 @@ def explain(report: dict, model: str) -> str:
 INSTALLABLE_MODELS = {"qwen2.5-coder:1.5b": 986, "qwen2.5-coder:3b": 1900}
 
 
-def pull_model(model: str, progress) -> None:
+def pull_model(model: str, progress, port: int = DEFAULT_PORT) -> None:
     """Download only a fixed allowlisted model with an explicit user-triggered action.
 
     All downloads are performed by the locally installed Ollama application.
@@ -64,7 +71,7 @@ def pull_model(model: str, progress) -> None:
     """
     if model not in INSTALLABLE_MODELS:
         raise ValueError("Only approved lightweight coding models can be installed")
-    request = Request(HOST + "/api/pull",
+    request = Request(host(port) + "/api/pull",
                       data=json.dumps({"name": model, "stream": True}).encode("utf-8"),
                       headers={"Content-Type": "application/json"}, method="POST")
     try:
