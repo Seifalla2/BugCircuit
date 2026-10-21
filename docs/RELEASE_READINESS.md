@@ -1,4 +1,6 @@
-# BugCircuit v0.3.0 — Release readiness (2026-10-21)
+# BugCircuit — Historical release-readiness notes (v0.3 and v0.4)
+
+> This document records **earlier** verification, not current v0.5.2 certification. The repository is now public. Current showcase changes and API privacy regressions require a fresh test run, manual browser QA, and review of the published Git history.
 
 ## Locally verified
 
