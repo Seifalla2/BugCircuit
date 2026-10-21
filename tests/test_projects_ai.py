@@ -118,7 +118,11 @@ def test_project_web_flow(web_server, tmp_path):
     status, output = req(srv, "POST", "/api/projects/connect", {"mode": "folder", "path": str(repo)}, valid_origin)
     assert status == 201
     project_id = output["project"]["id"]
-    assert req(srv, "GET", "/api/projects")[1]["projects"][0]["id"] == project_id
+    assert "path" not in output["project"], "Absolute local paths must stay server-side"
+    public_projects = req(srv, "GET", "/api/projects")[1]["projects"]
+    assert public_projects[0]["id"] == project_id
+    assert "path" not in public_projects[0]
+    assert str(repo) not in json.dumps(public_projects)
     status, output = req(srv, "POST", f"/api/projects/{project_id}/audit", {}, valid_origin)
     assert status == 201
     report_id = output["report"]["id"]
