@@ -46,6 +46,28 @@ def test_web_assets_and_health(server):
         assert status == 200 and data
 
 
+
+def test_showcase_is_synthetic_and_does_not_touch_owner_data(server):
+    srv, root = server
+    for resource in ("/showcase", "/showcase.html", "/assets/showcase.css",
+                     "/assets/showcase.js"):
+        status, body = call(srv, "GET", resource)
+        assert status == 200 and body
+
+    status, payload = call(srv, "GET", "/api/showcase")
+    assert status == 200
+    assert payload["synthetic"] is True
+    assert set(payload["examples"]) == {"oauth", "api", "workflow"}
+    oauth = payload["examples"]["oauth"]
+    assert "AUTH_CALLBACK_FAILED" in [f["code"] for f in oauth["findings"]]
+    assert "OAUTH_STATE_MISMATCH" in [f["code"] for f in oauth["findings"]]
+    assert "HTTP_SERVER_ERROR" in [f["code"] for f in payload["examples"]["api"]["findings"]]
+    assert "WORKFLOW_TIMEOUTS" in [f["code"] for f in payload["examples"]["workflow"]["findings"]]
+    assert all("Synthetic" in report["source"] for report in payload["examples"].values())
+    assert not list(root.glob("*/report.json"))
+    assert not list(root.glob("*/report.html"))
+
+
 def test_demo_saved_and_deleted(server):
     srv, root = server
     status, data = call(srv, "POST", "/api/demo", {}, json_headers(srv))
