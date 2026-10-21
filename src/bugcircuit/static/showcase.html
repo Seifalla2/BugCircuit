@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090d17">
+  <meta name="description" content="BugCircuit is a local-first, evidence-led diagnostic toolkit for browser, HTTP, authentication, and workflow failures. Explore synthetic samples safely.">
+  <title>BugCircuit | Evidence-first diagnostics</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/showcase.css">
+  <script src="/assets/showcase.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="logo" href="/showcase" aria-label="BugCircuit showcase home">
+        <span class="logo-symbol" aria-hidden="true">ϟ</span>
+        <span><strong>BUGCIRCUIT</strong><small>DIAGNOSTICS STUDIO</small></span>
+      </a>
+      <nav aria-label="Showcase navigation">
+        <a href="#experience">Interactive sample</a>
+        <a href="#capabilities">Capabilities</a>
+        <a class="quiet-link" href="/" title="Local owner workspace; do not open during a public demo">Private workspace ↗</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="pulse"></span> EVIDENCE BEFORE ASSUMPTIONS</span>
+        <h1>Make the failure <em>understandable.</em></h1>
+        <p class="lead">Turn diagnostic signals into a clear evidence timeline, prioritized findings, and practical next checks. Local-first tooling for developers and teams.</p>
+        <div class="hero-ctas">
+          <a class="action primary" href="#experience">Explore the live sample <span aria-hidden="true">↗</span></a>
+          <a class="action ghost" href="#capabilities">What it actually does <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="trustline"><span>◎ Works without cloud AI</span><span>◇ Read-only diagnostics</span><span>⌁ Evidence-linked findings</span></div>
+      </div>
+      <div class="hero-decoration" aria-hidden="true"><span class="ring ring-a"></span><span class="ring ring-b"></span><span class="core">ϟ</span><span class="orbit-point point-a"></span><span class="orbit-point point-b"></span><span class="orbit-point point-c"></span></div>
+    </section>
+    <section class="experience-band" id="experience">
+      <div class="shell">
+        <div class="section-heading">
+          <div><span class="eyebrow">01 / INTERACTIVE DIAGNOSTIC</span><h2>See evidence become a report.</h2></div>
+          <span class="demo-stamp">SYNTHETIC DATA · NO CLIENT INFORMATION</span>
+        </div>
+        <div class="demo-layout">
+          <aside class="scenario-picker" aria-label="Choose sample scenario">
+            <p class="picker-label">SELECT A SCENARIO</p>
+            <button type="button" class="scenario active" data-scenario="oauth" aria-pressed="true"><span class="scenario-icon">↳</span><span><strong>Authentication callback</strong><small>OAuth · state mismatch</small></span><span class="scenario-arrow">↗</span></button>
+            <button type="button" class="scenario" data-scenario="api" aria-pressed="false"><span class="scenario-icon">⇄</span><span><strong>API degradation</strong><small>HTTP · 5xx and 429</small></span><span class="scenario-arrow">↗</span></button>
+            <button type="button" class="scenario" data-scenario="workflow" aria-pressed="false"><span class="scenario-icon">⌁</span><span><strong>Workflow interruption</strong><small>Automation · timeout</small></span><span class="scenario-arrow">↗</span></button>
+            <div class="scenario-note"><strong>Safe to screen-share</strong><p>This view loads only hard-coded synthetic inputs analyzed by BugCircuit. It never reads your project list, saved reports, paths, settings, or API credentials.</p></div>
+          </aside>
+          <div class="report-frame" aria-live="polite">
+            <div class="frame-top"><div class="frame-title"><span class="frame-led"></span><span>BUGCIRCUIT / DIAGNOSTIC PREVIEW</span></div><span id="sample-state" class="frame-status">Loading sample…</span></div>
+            <div class="frame-body">
+              <div class="report-intro"><span id="sample-tag" class="sample-tag">SAMPLE REPORT</span><h3 id="sample-title">Evidence report</h3><p id="sample-description">Generated from fictional diagnostic events.</p></div>
+              <div class="metrics" aria-label="Sample report metrics">
+                <div><strong id="sample-events">—</strong><span>Observed events</span></div>
+                <div><strong id="sample-findings">—</strong><span>Findings</span></div>
+                <div><strong id="sample-high">—</strong><span>High-severity flags</span></div>
+              </div>
+              <div class="panel-head"><h4>Prioritized findings</h4><span>RULE-BASED · NO FABRICATED CAUSES</span></div>
+              <div id="sample-results" class="sample-results"><p class="loading">Preparing example…</p></div>
+              <div class="panel-head evidence-title"><h4>Evidence timeline</h4><span>OBSERVATIONS, NOT ASSUMPTIONS</span></div>
+              <div id="sample-timeline" class="timeline"></div>
+              <p class="report-caveat">This is a deliberately simulated scenario. Findings indicate observed symptoms, not a confirmed root cause or certified security assessment.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="capabilities shell" id="capabilities">
+      <div class="section-heading"><div><span class="eyebrow">02 / THE TOOLKIT</span><h2>Built for practical triage.</h2></div></div>
+      <div class="feature-grid">
+        <article><span class="feature-icon">◈</span><h3>Import evidence</h3><p>Review existing HAR, workflow execution JSON, and OpenTelemetry JSON exports without saving the original uploads.</p></article>
+        <article><span class="feature-icon">⌁</span><h3>Inspect authorized URLs</h3><p>Use bounded HTTP GET probes with hostname scoping. Browser capture is an optional CLI capability, not a hosted scanner.</p></article>
+        <article><span class="feature-icon">▤</span><h3>Document the findings</h3><p>Generate local HTML and JSON reports with evidence identifiers, confidence labels, and recommended verification steps.</p></article>
+        <article><span class="feature-icon">◇</span><h3>Optional local intelligence</h3><p>Use a locally running Ollama model to explain sanitized summaries. Deterministic diagnostics do not depend on AI.</p></article>
+      </div>
+      <div class="scope-note"><span class="scope-mark">i</span><p><strong>Scope matters.</strong> BugCircuit is currently an alpha-stage, local-only diagnostic tool. It does not automatically repair systems, certify vulnerabilities, expose private backend logs, or guarantee a root cause.</p></div>
+    </section>
+  </main>
+  <footer><div class="shell footer-inner"><div><strong>ϟ BUGCIRCUIT</strong><span>Evidence-first, local-first diagnostics.</span></div><p>Independent project by <a href="https://github.com/Seifalla2/BugCircuit" rel="noopener noreferrer" target="_blank">Seifalla2</a> · Synthetic showcase, not a production audit.</p></div></footer>
+</body>
+</html>
