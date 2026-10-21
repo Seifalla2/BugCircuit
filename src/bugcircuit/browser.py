@@ -36,7 +36,7 @@ async def _capture(url: str, allow_private: bool, wait_ms: int, check_layout: bo
     async with async_playwright() as playwright:
         try:
             browser = await playwright.chromium.launch(headless=True)
-        except Exception as exc:  # noqa: BLE001 - Playwright failures vary by platform
+        except Exception as exc:
             raise RuntimeError(
                 "Chromium not available. Run: python -m playwright install chromium"
             ) from exc

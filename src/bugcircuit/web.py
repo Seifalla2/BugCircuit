@@ -207,7 +207,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 result = json.loads(status_path().read_text(encoding="utf-8"))
                 if not isinstance(result, dict):
-                    raise ValueError("Invalid status")
+                    raise ValueError("Invalid status")  # noqa: TRY004 - intentionally caught as ValueError
             except (OSError, ValueError):
                 result = {"auto_update": False, "state": "not-running", "commit": "unknown"}
             return self._json(HTTPStatus.OK, result)
@@ -278,7 +278,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/ai/download":
                 model = payload.get("model", "")
                 if not isinstance(model, str) or model not in INSTALLABLE_MODELS:
-                    raise ValueError("Choose an approved small coding model")  # noqa: TRY004 - HTTP 400
+                    raise ValueError("Choose an approved small coding model")
                 with self.server.model_install_lock:
                     if self.server.model_install["state"] == "downloading":
                         return self._error(HTTPStatus.CONFLICT, "A model download is already running")
@@ -378,7 +378,7 @@ class Handler(BaseHTTPRequestHandler):
         if kind == "http":
             url = payload.get("url", "")
             if not isinstance(url, str) or len(url) > 2000:
-                raise ValueError("Valid URL required")  # noqa: TRY004 - HTTP 400
+                raise ValueError("Valid URL required")
             if payload.get("authorized") is not True:
                 raise ValueError("Confirm that you are authorized to inspect this URL")
             parsed = urlsplit(url)
