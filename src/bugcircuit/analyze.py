@@ -18,8 +18,10 @@ def analyze(events: list[Event], source: str, warnings: list[str] | None = None)
     for ev in events:
         if ev.kind != "http":
             continue
-        if ev.status == 401 or ev.status == 403:
+        if ev.status == 401:
             statuses["HTTP_AUTH_REJECTED"].append(ev)
+        elif ev.status == 403:
+            statuses["HTTP_ACCESS_FORBIDDEN"].append(ev)
         elif ev.status == 429:
             statuses["HTTP_RATE_LIMIT"].append(ev)
         elif ev.status and 500 <= ev.status <= 599:
@@ -31,8 +33,10 @@ def analyze(events: list[Event], source: str, warnings: list[str] | None = None)
             statuses["AUTH_CALLBACK_FAILED"].append(ev)
 
     templates = {
-        "HTTP_AUTH_REJECTED": ("high", "high", "A request returned HTTP 401 or 403. The server rejected authorization, but the trace alone does not prove why.",
-            ["Check authentication state and scopes on the affected request.", "Verify server session/cookie policy and API permissions."], "Authentication rejected"),
+        "HTTP_AUTH_REJECTED": ("high", "high", "A request returned HTTP 401. Authentication may be required or invalid; the trace alone does not prove why.",
+            ["Check authentication state and scopes on the affected request.", "Verify server session/cookie policy and API permissions."], "Authentication required (401)"),
+        "HTTP_ACCESS_FORBIDDEN": ("medium", "high", "A request returned HTTP 403. Access was forbidden to this client; WAF, anti-bot rules, access policy and authorization are possible explanations, not proven root causes.",
+            ["Compare browser and probe responses without bypassing access controls.", "Inspect CDN/WAF/firewall logs and relevant access rules if you administer the site."], "Access forbidden (403)"),
         "HTTP_RATE_LIMIT": ("medium", "high", "The server returned HTTP 429 (rate limiting).",
             ["Respect Retry-After where present.", "Introduce bounded exponential backoff and a request budget."], "Rate limit encountered"),
         "HTTP_SERVER_ERROR": ("high", "high", "One or more requests returned HTTP 5xx. The root cause requires server logs.",

@@ -26,6 +26,8 @@ from .models import Event
 from .otel import parse_otlp
 from .probe import ScopeError, inspect_url
 from .reporting import export_report
+from .projects import ProjectStore, audit_project, choose_local_folder
+from .local_ai import models as ollama_models, explain as explain_with_ollama
 
 MAX_REQUEST_BYTES = MAX_HAR_BYTES + 2048  # The JSON envelope adds a small overhead.
 REPORT_ID = re.compile(r"^[a-f0-9]{16}$")
@@ -66,6 +68,7 @@ class LocalServer(ThreadingHTTPServer):
             raise ValueError("BugCircuit web UI binds only to 127.0.0.1")
         self.reports_dir = (directory or data_root()).resolve()
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        self.projects = ProjectStore(self.reports_dir.parent)
         self.active_jobs = 0
         self.jobs_lock = threading.Lock()
         super().__init__(address, Handler)
@@ -165,6 +168,10 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, ValueError):
                 result = {"auto_update": False, "state": "not-running", "commit": "unknown"}
             return self._json(HTTPStatus.OK, result)
+        if path == "/api/projects":
+            return self._json(HTTPStatus.OK, {"projects": self.server.projects.list()})
+        if path == "/api/ai/models":
+            return self._json(HTTPStatus.OK, {"models": ollama_models(), "provider": "ollama-local"})
         if path == "/api/reports":
             reports = self._list_reports()
             return self._json(HTTPStatus.OK, {"reports": reports, "total": len(reports)})
@@ -192,7 +199,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         if not self._trusted_request(modifying=True):
             return
-        if self.path not in ("/api/analyze", "/api/demo", "/api/updates/check"):
+        project_audit = re.fullmatch(r"/api/projects/([a-f0-9]{16})/audit", self.path)
+        report_ai = re.fullmatch(r"/api/reports/([a-f0-9]{16})/ai", self.path)
+        if self.path not in ("/api/analyze", "/api/demo", "/api/updates/check",
+                             "/api/projects/connect", "/api/projects/pick-folder") and not (project_audit or report_ai):
             return self._error(HTTPStatus.NOT_FOUND, "Not found")
         try:
             size = int(self.headers.get("Content-Length", "-1"))
@@ -205,6 +215,45 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(size))
             if not isinstance(payload, dict):
                 raise ValueError("JSON object expected")
+            if self.path == "/api/projects/pick-folder":
+                choice = choose_local_folder()
+                return self._json(HTTPStatus.OK, {"path": choice})
+            if self.path == "/api/projects/connect":
+                mode = payload.get("mode")
+                if mode == "folder":
+                    item = self.server.projects.connect_folder(payload.get("path", ""))
+                elif mode == "github":
+                    item = self.server.projects.connect_public(payload.get("url", ""))
+                else:
+                    raise ValueError("Select GitHub URL or local repository folder")
+                return self._json(HTTPStatus.CREATED, {"project": item})
+            if project_audit:
+                with self.server.jobs_lock:
+                    self.server.active_jobs += 1
+                try:
+                    entry = self.server.projects.get(project_audit.group(1))
+                    report = audit_project(entry)
+                    ident = secrets.token_hex(8)
+                    export_report(report, self.server.reports_dir / ident)
+                    return self._json(HTTPStatus.CREATED, {"report": summary(report.as_dict(), ident)})
+                finally:
+                    with self.server.jobs_lock:
+                        self.server.active_jobs -= 1
+            if report_ai:
+                folder = self._report_path(report_ai.group(1))
+                file = folder / "report.json" if folder else None
+                if not file or not file.is_file():
+                    return self._error(HTTPStatus.NOT_FOUND, "Report not found")
+                with self.server.jobs_lock:
+                    self.server.active_jobs += 1
+                try:
+                    result = explain_with_ollama(json.loads(file.read_text(encoding="utf-8")),
+                                                 payload.get("model", ""))
+                    return self._json(HTTPStatus.OK, {"analysis": result, "provider": "ollama-local",
+                                                      "warning": "AI suggestions are unverified; no source files were sent."})
+                finally:
+                    with self.server.jobs_lock:
+                        self.server.active_jobs -= 1
             if self.path == "/api/updates/check":
                 from .updater import request_path
                 request_path().write_text("check", encoding="utf-8")
@@ -271,6 +320,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self) -> None:
         if not self._trusted_request(modifying=True):
             return
+        forgotten = re.fullmatch(r"/api/projects/([a-f0-9]{16})", self.path)
+        if forgotten:
+            try:
+                self.server.projects.forget(forgotten.group(1))
+                return self._json(HTTPStatus.OK, {"forgotten": True, "files_preserved": True})
+            except ValueError:
+                return self._error(HTTPStatus.NOT_FOUND, "Project not found")
         match = re.fullmatch(r"/api/reports/([a-f0-9]{16})", self.path)
         if not match:
             return self._error(HTTPStatus.NOT_FOUND, "Not found")

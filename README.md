@@ -204,7 +204,17 @@ All shipped fixtures use fictional `.test` domains, not client data. Future plan
 
 [MIT](LICENSE). Contributions welcome. This is an independent open-source project and is not affiliated with Playwright, GitHub, or any third-party authentication service.
 
+## Connect GitHub and local repositories (v0.5 alpha)
 
-## Local GitHub auto-updates (v0.4.1)
+The browser interface now includes **Projects**, a per-user, read-only source inspection workspace:
 
-Double-click `Start BugCircuit.cmd` on Windows after pulling v0.4.1 once from GitHub Desktop. The launcher now supervises a loopback-only web server and checks the private GitHub `main` every 5 minutes with guarded fast-forward-only updates. See [README-WINDOWS.md](README-WINDOWS.md) for setup, limitations, authentication, and browser usage. Raw reports remain outside Git.
+- **Public GitHub repositories:** paste a full `https://github.com/owner/repository` link; BugCircuit uses Git to clone with a fixed `github.com` HTTPS remote into a local managed cache. Git must be installed. This is explicitly initiated by the user; no scheduled clone/pull of third-party projects occurs.
+- **Private GitHub repositories:** clone them using **GitHub Desktop**, authenticate there, and choose the clone's root folder under **Projects → Local folder**. The browser UI also has an optional native folder picker. BugCircuit does not request GitHub access tokens or repository write scopes.
+- **Source audit:** checks tracked files only, skips `.env` content, passwords, symlinks, node_modules, virtual environments, large binary files and source trees beyond scan limits. Reports potential CI/test gaps, TLS verification bypass, shell execution patterns, and names of sensitive-looking tracked files. Matches are **heuristics**, not proofs of vulnerabilities. It never runs code or changes user files.
+- **Local AI explanation (optional):** enumerates locally installed Ollama models and produces a read-only advisory based on sanitized diagnostic findings. Ollama runs on `127.0.0.1:11434`. **No raw source code** is sent to the model, and there is no hosted-model fallback. Installing Ollama and a model is a user opt-in.
+
+Repository findings and HTTP traces answer different questions: a site can return 403 to a machine client while the site works normally for visitors, because CDN/WAF rules can differ. v0.5 distinguishes observed 403 access denial from observed HTTP 401 authentication rejection.
+
+**Limitations:** This is an initial static review, not a general code understanding agent, vulnerability certification, OAuth integration, unattended code fixer, or full web crawler. Public Git clones need internet connectivity and may be slow for large repos. The application stays bound to loopback; do not expose it to other devices without separate authentication and transport security. For private GitHub accounts, use the locally cloned repository method rather than sharing credentials.
+
+[Windows onboarding and privacy guide](README-WINDOWS.md)

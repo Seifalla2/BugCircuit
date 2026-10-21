@@ -6,3 +6,17 @@
 [hidden]{display:none!important}
 
 #auto-update-panel .field-hint{margin:10px 0 16px}#auto-update-panel button{margin-top:18px}#update-status-text{font-weight:650;color:var(--accent2)}
+
+/* Connected repositories and optional read-only local AI. */
+.project-source{grid-template-columns:repeat(2,minmax(0,1fr))}
+.project-input{width:100%;background:#0c1426;color:#f0f3ff;border:1px solid #36435e;border-radius:10px;padding:13px;margin-bottom:12px}
+.project-input:focus{border-color:#9483ff;outline:2px solid #9483ff44}
+#project-folder-area .field-hint,#project-github-area .field-hint{margin-top:13px}
+#project-list .report-row{flex-wrap:wrap}
+.project-actions{display:flex;gap:8px;align-items:center}
+.local-ai-panel{margin-top:26px}
+.local-ai-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:15px 0}
+.local-ai-actions select{max-width:300px;min-width:170px;background:#10182e;color:#eaf0ff;border:1px solid #39445c;padding:10px 12px;border-radius:10px}
+.ai-output{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:13px;line-height:1.8;background:#0a1020;border:1px solid #37425a;border-radius:10px;padding:18px;max-height:600px;overflow:auto}
+html[dir=rtl] .local-ai-panel{text-align:right}
+@media(max-width:720px){.project-actions{width:100%;justify-content:flex-end}.local-ai-actions select{flex:1}}
