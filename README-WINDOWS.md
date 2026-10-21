@@ -31,10 +31,12 @@
 
 ### Optional local AI
 
-Install [Ollama](https://ollama.com/download/windows) on Windows and start it. Install a suitable local model such as [Qwen2.5-Coder 3B](https://ollama.com/library/qwen2.5-coder) via Ollama. In any report, use **Find models**, choose an installed model, then **Explain report**. No API key or cloud account is needed. BugCircuit calls **127.0.0.1:11434 only**, and sends *summaries of findings*, not source files, raw HAR or tokens. Ollama/model installation and local model inference require their own resources; absence of Ollama leaves all deterministic analysis features usable.
+Install [Ollama](https://ollama.com/download/windows) on Windows and start it. Install a suitable local model such as [Qwen2.5-Coder 3B](https://ollama.com/library/qwen2.5-coder) via Ollama. In any report, use **Find models**, choose an installed model, then **Explain report**. No API key or cloud account is needed. BugCircuit connects to **127.0.0.1:11434 by default**. If Ollama runs on a different port (for example `11435`), set **Ollama port** in the report AI panel and click **Connect Ollama**. Only loopback connections are allowed. BugCircuit sends *summaries of findings*, not source files, raw HAR or tokens. Ollama/model installation and local model inference require their own resources; absence of Ollama leaves all deterministic analysis features usable.
 
 **Privacy:** Connecting a local clone grants this single-user, loopback-only BugCircuit process read access to *tracked, selected* files in that clone. Restrict physical access to the laptop and review generated reports before sharing. A repository URL cannot grant access to someone else's private GitHub repository. A tokenless private clone requires that user to authenticate through GitHub Desktop outside BugCircuit.
 
 ### One-click model setup (v0.5.1)
 
 After installing and running Ollama, open a saved report in BugCircuit. In **Local AI**, choose either **Qwen Coder 1.5B (~986 MB)** or **Qwen Coder 3B (~1.9 GB)** and click **Install model through Ollama**. Confirm the disk/network notice. The download runs locally via Ollama and the panel displays progress. When complete, choose the installed model in the report and click **Explain report**. This optional download is not started without your click and confirmation; it requires internet access and adequate disk/RAM. There is no silent bundled model download and no command line required after Ollama itself is installed.
+
+**If a report flags strings in comments as executable:** update to v0.5.2+, then run a new **Projects → Analyze code** scan. Previously saved reports remain unchanged. Python patterns now use AST and ignore test fixtures; these rules do not analyze JavaScript, TypeScript or PHP source code.

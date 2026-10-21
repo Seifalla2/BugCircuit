@@ -5,11 +5,11 @@
 [![Tests](https://github.com/Seifalla2/BugCircuit/actions/workflows/test.yml/badge.svg)](https://github.com/Seifalla2/BugCircuit/actions/workflows/test.yml)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab)
 ![License](https://img.shields.io/badge/license-MIT-4c1)
-![Status](https://img.shields.io/badge/status-v0.4%20alpha-orange)
+![Status](https://img.shields.io/badge/status-v0.5.2%20alpha-orange)
 
-> **Status: v0.4 local-web alpha** — functioning local dashboard, CLI and report generator, not yet proven in real-world deployments. The GitHub CI status is unverified while hosted runners are unavailable in the private repository.
+> **Status: v0.5.2 alpha** — functioning local dashboard, CLI and report generator. Local tests pass; production browser compatibility and GitHub CI still require independent verification.
 
-BugCircuit imports an existing HTTP Archive (HAR), probes an authorized URL with bounded HTTP GET requests, or optionally observes a single page through Playwright. A deterministic rules engine links errors to evidence IDs and produces portable HTML and JSON reports. It **does not use an LLM, run aggressive scans, collect credentials, or apply fixes automatically**.
+BugCircuit imports an existing HTTP Archive (HAR), probes an authorized URL with bounded HTTP GET requests, or optionally observes a single page through Playwright. A deterministic rules engine links errors to evidence IDs and produces portable HTML and JSON reports. The deterministic analysis works without an LLM. An **optional local Ollama model** can explain sanitized findings. It does not run aggressive scans, collect credentials, or apply fixes automatically.
 
 ### Why it exists
 
@@ -37,7 +37,7 @@ The tool distinguishes **observed symptoms** from **hypothesized root causes**. 
    Leave the small server window running. Bookmark this address.
 5. Optionally double-click **`Enable Auto-start.cmd`** once to start the app at Windows login;
    `Disable Auto-start.cmd` reverses this. No router port forwarding.
-6. For updates use GitHub Desktop **Fetch origin → Pull origin** and restart the launcher.
+6. The Windows launcher checks for clean fast-forward updates periodically while running. If update is blocked by local edits or authentication, use GitHub Desktop **Fetch origin → Pull origin** and restart.
 
 Dashboard features: English/Arabic, local report archive and delete, upload HAR/Workflow/OTLP
 JSON, run bounded public HTTP GET diagnostics against explicitly authorized URLs, download
@@ -204,17 +204,19 @@ All shipped fixtures use fictional `.test` domains, not client data. Future plan
 
 [MIT](LICENSE). Contributions welcome. This is an independent open-source project and is not affiliated with Playwright, GitHub, or any third-party authentication service.
 
-## Connect GitHub and local repositories (v0.5 alpha)
+## Connect GitHub and local repositories (v0.5.2 alpha)
 
 The browser interface now includes **Projects**, a per-user, read-only source inspection workspace:
 
 - **Public GitHub repositories:** paste a full `https://github.com/owner/repository` link; BugCircuit uses Git to clone with a fixed `github.com` HTTPS remote into a local managed cache. Git must be installed. This is explicitly initiated by the user; no scheduled clone/pull of third-party projects occurs.
 - **Private GitHub repositories:** clone them using **GitHub Desktop**, authenticate there, and choose the clone's root folder under **Projects → Local folder**. The browser UI also has an optional native folder picker. BugCircuit does not request GitHub access tokens or repository write scopes.
-- **Source audit:** checks tracked files only, skips `.env` content, passwords, symlinks, node_modules, virtual environments, large binary files and source trees beyond scan limits. Reports potential CI/test gaps, TLS verification bypass, shell execution patterns, and names of sensitive-looking tracked files. Matches are **heuristics**, not proofs of vulnerabilities. It never runs code or changes user files.
-- **Local AI explanation (optional):** enumerates locally installed Ollama models and produces a read-only advisory based on sanitized diagnostic findings. Ollama runs on `127.0.0.1:11434`. **No raw source code** is sent to the model, and there is no hosted-model fallback. Installing Ollama and a model is a user opt-in.
+- **Source audit:** checks tracked files only, skips `.env` content, passwords, symlinks, node_modules, virtual environments, large binary files and source trees beyond scan limits. Reports potential CI/test gaps, TLS verification bypass, shell execution patterns, and names of sensitive-looking tracked files. Python source-code patterns are checked with the AST (not text matching), excluding test fixtures to reduce false positives; these rules do **not** analyze JS/TS/PHP source. Findings remain **heuristics**, not proofs of vulnerabilities. It never runs code or changes user files.
+- **Local AI explanation (optional):** enumerates locally installed Ollama models and produces a read-only advisory based on sanitized diagnostic findings. Ollama is accessed through `127.0.0.1` only, on port `11434` by default. If yours uses `11435` or another local port, set it via **Explain report → Ollama port → Connect Ollama**; the selection persists on your device. **No raw source code** is sent to the model, and there is no hosted-model fallback. Installing Ollama and a model is a user opt-in.
 
 Repository findings and HTTP traces answer different questions: a site can return 403 to a machine client while the site works normally for visitors, because CDN/WAF rules can differ. v0.5 distinguishes observed 403 access denial from observed HTTP 401 authentication rejection.
 
 **Limitations:** This is an initial static review, not a general code understanding agent, vulnerability certification, OAuth integration, unattended code fixer, or full web crawler. Public Git clones need internet connectivity and may be slow for large repos. The application stays bound to loopback; do not expose it to other devices without separate authentication and transport security. For private GitHub accounts, use the locally cloned repository method rather than sharing credentials.
 
 [Windows onboarding and privacy guide](README-WINDOWS.md)
+
+**After upgrading:** New scans use the corrected AST checks and report version. Existing saved reports are historical snapshots and are not rewritten automatically. Re-run **Projects → Analyze code** to verify a fixed false positive.
