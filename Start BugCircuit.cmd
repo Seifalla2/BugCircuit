@@ -22,9 +22,9 @@ if not exist ".venv\bugcircuit-web-v0.4.ready" (
 )
 echo.
 echo  BugCircuit local dashboard: http://127.0.0.1:8765
- echo  This window runs the local server. Do not close it while using BugCircuit.
+ echo  Safe GitHub updates check every 5 minutes. Keep this window open.
 echo.
-".venv\Scripts\python.exe" -m bugcircuit serve --open
+".venv\Scripts\python.exe" -m bugcircuit.updater --open
 if errorlevel 1 (
   echo.
   echo [BugCircuit] Server could not start. Port 8765 might be in use.

@@ -115,3 +115,15 @@ def test_oversized_request_rejected(server):
 def test_loopback_binding_enforced(tmp_path):
     with pytest.raises(ValueError, match="127.0.0.1"):
         LocalServer(("0.0.0.0", 0), directory=tmp_path)
+
+def test_update_status_and_manual_update_request(server, tmp_path, monkeypatch):
+    monkeypatch.setenv("BUGCIRCUIT_DATA_DIR", str(tmp_path / "state" / "reports"))
+    from bugcircuit.updater import safe_status, request_path
+    srv, _ = server
+    safe_status(state="current", commit="abcdef01")
+    status, payload = call(srv, "GET", "/api/update-status")
+    assert status == 200 and payload["commit"] == "abcdef01"
+    status, payload = call(srv, "POST", "/api/updates/check", {}, json_headers(srv))
+    assert status == 202 and payload["queued"] is True and request_path().exists()
+    status, _ = call(srv, "POST", "/api/updates/check", {}, {"Content-Type": "application/json", "Origin": "https://attacker.test"})
+    assert status == 403

@@ -203,3 +203,8 @@ All shipped fixtures use fictional `.test` domains, not client data. Future plan
 ## License
 
 [MIT](LICENSE). Contributions welcome. This is an independent open-source project and is not affiliated with Playwright, GitHub, or any third-party authentication service.
+
+
+## Local GitHub auto-updates (v0.4.1)
+
+Double-click `Start BugCircuit.cmd` on Windows after pulling v0.4.1 once from GitHub Desktop. The launcher now supervises a loopback-only web server and checks the private GitHub `main` every 5 minutes with guarded fast-forward-only updates. See [README-WINDOWS.md](README-WINDOWS.md) for setup, limitations, authentication, and browser usage. Raw reports remain outside Git.

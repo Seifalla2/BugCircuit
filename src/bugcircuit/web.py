@@ -66,6 +66,8 @@ class LocalServer(ThreadingHTTPServer):
             raise ValueError("BugCircuit web UI binds only to 127.0.0.1")
         self.reports_dir = (directory or data_root()).resolve()
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        self.active_jobs = 0
+        self.jobs_lock = threading.Lock()
         super().__init__(address, Handler)
 
 
@@ -152,7 +154,17 @@ class Handler(BaseHTTPRequestHandler):
             return self._static(name, ctype)
         if path == "/api/health":
             return self._json(HTTPStatus.OK, {"ok": True, "version": __version__,
-                                               "mode": "loopback", "host": "127.0.0.1"})
+                                               "mode": "loopback", "host": "127.0.0.1",
+                                               "busy": self.server.active_jobs > 0})
+        if path == "/api/update-status":
+            from .updater import status_path
+            try:
+                result = json.loads(status_path().read_text(encoding="utf-8"))
+                if not isinstance(result, dict):
+                    raise ValueError("Invalid status")
+            except (OSError, ValueError):
+                result = {"auto_update": False, "state": "not-running", "commit": "unknown"}
+            return self._json(HTTPStatus.OK, result)
         if path == "/api/reports":
             reports = self._list_reports()
             return self._json(HTTPStatus.OK, {"reports": reports, "total": len(reports)})
@@ -180,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         if not self._trusted_request(modifying=True):
             return
-        if self.path not in ("/api/analyze", "/api/demo"):
+        if self.path not in ("/api/analyze", "/api/demo", "/api/updates/check"):
             return self._error(HTTPStatus.NOT_FOUND, "Not found")
         try:
             size = int(self.headers.get("Content-Length", "-1"))
@@ -193,15 +205,25 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(size))
             if not isinstance(payload, dict):
                 raise ValueError("JSON object expected")
-            if self.path == "/api/demo":
-                events, warnings, source = self._demo()
-            else:
-                events, warnings, source = self._analyze_input(payload)
-            report = analyze(events, source=source, warnings=warnings)
-            report_id = secrets.token_hex(8)
-            folder = self.server.reports_dir / report_id
-            export_report(report, folder)
-            self._json(HTTPStatus.CREATED, {"report": summary(report.as_dict(), report_id)})
+            if self.path == "/api/updates/check":
+                from .updater import request_path
+                request_path().write_text("check", encoding="utf-8")
+                return self._json(HTTPStatus.ACCEPTED, {"queued": True})
+            with self.server.jobs_lock:
+                self.server.active_jobs += 1
+            try:
+                if self.path == "/api/demo":
+                    events, warnings, source = self._demo()
+                else:
+                    events, warnings, source = self._analyze_input(payload)
+                report = analyze(events, source=source, warnings=warnings)
+                report_id = secrets.token_hex(8)
+                folder = self.server.reports_dir / report_id
+                export_report(report, folder)
+                self._json(HTTPStatus.CREATED, {"report": summary(report.as_dict(), report_id)})
+            finally:
+                with self.server.jobs_lock:
+                    self.server.active_jobs -= 1
         except (ValueError, TypeError, ScopeError, UnicodeError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, str(exc)[:240])
         except Exception:
