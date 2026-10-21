@@ -25,3 +25,15 @@
 
 This is a development alpha, not a production-certified debugging suite.
 No user or client repository data was imported into examples or fixtures.
+
+## Local dashboard v0.4 verification (2026-10-21)
+
+- Added a dependency-free, loopback-only HTTP dashboard; checks refuse nonloopback binding.
+- Added offline upload flow for HAR/Workflow/OTLP and live authorized public HTTP GET.
+- The raw upload bytes remain in memory; sanitized report artifacts are persisted in the OS user data folder.
+- Added Windows launcher, optional login auto-start, Arabic/English controls and report management.
+- CLI analysis and reporting behavior remains available and covered by regression tests.
+- API security checks cover Host and Origin, no CORS opt-in, content type, size budgets and report ID paths.
+- **Not yet verified:** GUI rendering on Windows Chromium, actual Windows double-click installation,
+  Windows auto-start, CI runners, and optional Playwright capture in a real browser.
+- **Never expose localhost port 8765 directly to the internet:** the dashboard is not designed as an authenticated web service.

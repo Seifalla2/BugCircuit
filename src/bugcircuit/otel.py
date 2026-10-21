@@ -44,6 +44,11 @@ def read_otlp(path: Path) -> tuple[list[Event], list[str]]:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, UnicodeError) as exc:
         raise ValueError("Invalid UTF-8 OTLP JSON") from exc
+    return parse_otlp(data)
+
+
+def parse_otlp(data: object) -> tuple[list[Event], list[str]]:
+    """Inspect decoded OTLP spans in memory, without persisting source payloads."""
     if not isinstance(data, dict) or not isinstance(data.get("resourceSpans"), list):
         raise ValueError("Expected OTLP JSON object with resourceSpans array")
     events = []

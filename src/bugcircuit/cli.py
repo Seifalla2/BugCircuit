@@ -37,12 +37,21 @@ def parser() -> argparse.ArgumentParser:
     ot = commands.add_parser("analyze-otel", help="Offline OTLP JSON trace diagnostics")
     ot.add_argument("otlp", type=Path)
     ot.add_argument("--out", type=Path, default=Path("bugcircuit-report"))
+    server = commands.add_parser("serve", help="Run the local browser dashboard on 127.0.0.1")
+    server.add_argument("--port", type=int, default=8765)
+    server.add_argument("--open", action="store_true", help="Open browser automatically")
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "serve":
+            if not 1024 <= args.port <= 65535:
+                raise ValueError("Port must be between 1024 and 65535")
+            from .web import serve
+            serve(port=args.port, open_browser=args.open)
+            return 0
         if args.command == "analyze-har":
             events, warnings = read_har(args.har)
             source = f"HAR: {args.har.name}"

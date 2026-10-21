@@ -5,9 +5,9 @@
 [![Tests](https://github.com/Seifalla2/BugCircuit/actions/workflows/test.yml/badge.svg)](https://github.com/Seifalla2/BugCircuit/actions/workflows/test.yml)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab)
 ![License](https://img.shields.io/badge/license-MIT-4c1)
-![Status](https://img.shields.io/badge/status-v0.3%20alpha-orange)
+![Status](https://img.shields.io/badge/status-v0.4%20alpha-orange)
 
-> **Status: v0.3 alpha** — functioning CLI and report generator, not yet proven in real-world deployments. The GitHub CI status is unverified while hosted runners are unavailable in the private repository.
+> **Status: v0.4 local-web alpha** — functioning local dashboard, CLI and report generator, not yet proven in real-world deployments. The GitHub CI status is unverified while hosted runners are unavailable in the private repository.
 
 BugCircuit imports an existing HTTP Archive (HAR), probes an authorized URL with bounded HTTP GET requests, or optionally observes a single page through Playwright. A deterministic rules engine links errors to evidence IDs and produces portable HTML and JSON reports. It **does not use an LLM, run aggressive scans, collect credentials, or apply fixes automatically**.
 
@@ -24,6 +24,26 @@ Debugging often begins with vague messages like “login failed” or “the ser
 - **Reports:** sanitized event timeline, finding severity, confidence *labels*, and suggested verification steps.
 
 The tool distinguishes **observed symptoms** from **hypothesized root causes**. HTTP 403 is evidence that authorization was rejected; it is **not** proof that a particular OAuth scope or cookie policy caused it.
+
+## Local web dashboard on Windows (recommended)
+
+> **No recurring PowerShell commands needed.** The repo includes a local-first
+> browser dashboard, a double-click launcher and an optional Windows login starter.
+
+1. Install **Python 3.10+** once if required.
+2. Use **GitHub Desktop → Clone repository** for `Seifalla2/BugCircuit`.
+3. Open the cloned folder in Explorer and double-click **`Start BugCircuit.cmd`**.
+4. The first launch installs into an isolated `.venv`, then opens **http://127.0.0.1:8765/**.
+   Leave the small server window running. Bookmark this address.
+5. Optionally double-click **`Enable Auto-start.cmd`** once to start the app at Windows login;
+   `Disable Auto-start.cmd` reverses this. No router port forwarding.
+6. For updates use GitHub Desktop **Fetch origin → Pull origin** and restart the launcher.
+
+Dashboard features: English/Arabic, local report archive and delete, upload HAR/Workflow/OTLP
+JSON, run bounded public HTTP GET diagnostics against explicitly authorized URLs, download
+sanitized HTML/JSON reports, and an offline demo. Browser Playwright capture remains an
+optional CLI feature and is not a dashboard capability yet. The app is **bound to
+127.0.0.1 only**, not internet-accessible. See [Windows guide](README-WINDOWS.md).
 
 ## Quick start
 

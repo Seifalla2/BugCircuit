@@ -24,6 +24,11 @@ def read_workflow(path: Path) -> tuple[list[Event], list[str]]:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, UnicodeError) as exc:
         raise ValueError("Workflow export must contain valid UTF-8 JSON") from exc
+    return parse_workflow(data)
+
+
+def parse_workflow(data: object) -> tuple[list[Event], list[str]]:
+    """Inspect decoded workflow exports in memory, discarding payloads."""
     if not isinstance(data, dict) or not isinstance(data.get("executions"), list):
         raise ValueError("Expected JSON object with executions array")
     if len(data["executions"]) > MAX_EXECUTIONS:

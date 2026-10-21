@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bugcircuit"
-version = "0.3.0"
+version = "0.4.0"
 description = "Evidence-first diagnostics for browser, API, and authentication failures."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,3 +41,6 @@ addopts = "-ra"
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.setuptools.package-data]
+bugcircuit = ["static/*.html", "static/*.css", "static/*.js", "static/*.svg"]

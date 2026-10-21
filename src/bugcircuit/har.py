@@ -26,6 +26,11 @@ def read_har(path: Path) -> tuple[list[Event], list[str]]:
             data: Any = json.load(f)
     except (json.JSONDecodeError, UnicodeError) as exc:
         raise TraceError("HAR is not valid UTF-8 JSON") from exc
+    return parse_har(data)
+
+
+def parse_har(data: Any) -> tuple[list[Event], list[str]]:
+    """Inspect an already decoded HAR without writing the original trace to disk."""
     if not isinstance(data, dict) or not isinstance(data.get("log"), dict):
         raise TraceError("Expected a HAR object with a 'log' field")
     entries = data["log"].get("entries")
