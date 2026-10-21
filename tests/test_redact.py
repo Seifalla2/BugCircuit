@@ -28,3 +28,17 @@ def test_error_strings_redact_tokens_urls_and_emails():
     assert "private" not in value
     assert "abc123" not in value
     assert "user@corp.com" not in value
+
+
+def test_malformed_embedded_url_does_not_recurse():
+    from bugcircuit.redact import safe_text, safe_url
+
+    assert safe_text("failed link http:///bad") == "failed link http:///bad"
+    assert safe_url("http:///bad") == "http:///bad"
+    assert "SECRET" not in safe_text("bad http://?token=SECRET")
+
+
+def test_malformed_url_redacts_fragmented_email():
+    from bugcircuit.redact import safe_text
+
+    assert "private@example.com" not in safe_text("http:///private@example.com")

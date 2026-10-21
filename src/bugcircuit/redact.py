@@ -17,14 +17,19 @@ _LONG_SEGMENT = re.compile(r"(?<![\w-])[A-Za-z0-9_-]{32,}(?![\w-])")
 _URL_IN_TEXT = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
 
 
-def safe_text(value: object, limit: int = 300) -> str:
-    """Remove common secret patterns from exception/console strings."""
+def _plain_text(value: object, limit: int = 300) -> str:
+    """Redact scalar text without recursively parsing embedded URLs."""
     text = str(value or "")
-    text = _URL_IN_TEXT.sub(lambda m: safe_url(m.group(0)), text)
     text = _SECRET_INLINE.sub(lambda m: (m.group(1) or m.group(2) or "") + "[REDACTED]", text)
     text = _EMAIL.sub("[EMAIL]", text)
     text = _LONG_SEGMENT.sub("[REDACTED]", text)
     return text[:limit]
+
+
+def safe_text(value: object, limit: int = 300) -> str:
+    """Remove common secret patterns from exception/console strings."""
+    text = _URL_IN_TEXT.sub(lambda m: safe_url(m.group(0)), str(value or ""))
+    return _plain_text(text, limit)
 
 
 def safe_url(raw: object) -> str:
@@ -35,8 +40,8 @@ def safe_url(raw: object) -> str:
             if parts.query:
                 query = "&".join(f"{quote(k)}=REDACTED" for k, _ in parse_qsl(
                     parts.query, keep_blank_values=True)[:30])
-                return urlunsplit(("", "", safe_text(parts.path, 160), query, ""))
-            return safe_text(raw, 160)
+                return urlunsplit(("", "", _plain_text(parts.path, 160), query, ""))
+            return _plain_text(raw, 160)
         host = parts.hostname.lower()
         # Restore IPv6 brackets, drop username/password from authority.
         host = f"[{host}]" if ":" in host else host
