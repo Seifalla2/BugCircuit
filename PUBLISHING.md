@@ -1,32 +1,33 @@
-# Release and public-visibility checklist
+# BugCircuit — publishing and release checklist
 
-The canonical repository is **Seifalla2/BugCircuit**. It already exists on
-GitHub and must remain **private** until the owner explicitly changes its
-visibility. Do not reinitialize Git or attempt to push an unrelated history.
+BugCircuit is **already a public MIT-licensed GitHub repository**. Publishing commits to `main` makes those source changes visible, including the Python analysis engine. UI hiding and deleting files do not erase prior Git history or revoke existing MIT licenses.
 
-## Before the first public release
+## Current distribution status
 
-1. Verify source code and package version against `main`.
-2. Run `python -m pip install -e '.[dev,browser]'`, `pytest -q`, and `ruff check .`
-   on the supported Python versions in an isolated environment.
-3. Install Chromium with `python -m playwright install chromium`; run authorized
-   browser/RTL smoke tests in a network sandbox. Fixture-only tests are not
-   enough to establish browser compatibility.
-4. Review the threat model and verify DNS-rebinding/egress safeguards.
-5. Audit all repository history, issues, examples, generated HTML, and release
-   artifacts for secrets, account information and client data.
-6. Have at least one independent reviewer validate findings and package install.
-7. Only after the above gates pass, the owner may switch visibility to Public
-   in GitHub Settings and create a signed or checksum-verified release.
+- **Source distribution:** public repository with a local Windows launcher and Python CLI.
+- **Version:** v0.5.2 alpha (source).
+- **CI:** GitHub Actions Python 3.10, 3.12 and 3.13 tests and Ruff lint have been verified for the portfolio-showcase PR head; check the latest `main` run after merging.
+- **Public web app:** **none**. `/showcase` runs only on the laptop's loopback server, not GitHub Pages or a hosted backend.
+- **Windows executable / PyPI / signed release:** not published or independently certified.
 
-## Current limitations
+## Release gates
 
-- The v0.3 CLI, offline synthetic fixtures and wheel have been tested locally.
-- GitHub Actions attempted to start in the private repository but a runner did
-  not execute the job. Hosted CI is **not verified**.
-- Chromium-driven browser/viewport integration is **not verified** in the
-  development environment.
-- No public PyPI distribution or production-hardening certification is claimed.
+- [x] Show a synthetic-only portfolio route based on deterministic rules.
+- [x] Keep project filesystem paths out of ordinary project API responses.
+- [x] Regression tests for synthetic samples, no saved-report side effects and project path serialization.
+- [x] Automated Python matrix and Ruff lint for the feature PR.
+- [ ] Complete **manual** Windows Chrome/Edge rendering, responsive, Arabic/RTL and auto-update testing.
+- [ ] Independently review code and Git **history**, issues, examples, releases and artifacts for sensitive data.
+- [ ] Validate SSRF/DNS rebinding and untrusted-browser boundaries in an isolated network.
+- [ ] Test installation, update/rollback and wheel build in clean Windows/macOS/Linux environments.
+- [ ] Add external beta feedback and provide checksum/signed distribution artifacts.
 
-Use the source repository itself for future development. No new `git init`,
-`git push --force`, or auto-publication is part of this process.
+**Do not claim all security or shipping gates have passed.** A successful unit-test matrix is not production certification.
+
+## Portfolio demo rules
+
+Use `http://127.0.0.1:8765/showcase` on the development laptop; keep the owner workspace hidden. Only the three synthetic examples are suitable for public capture without client clearance. See [Demo guide](docs/DEMO_GUIDE.md).
+
+## If a proprietary engine is needed later
+
+Create a distinct **private** repository or separately hosted service for new proprietary implementation. Define the boundary explicitly, perform license review, remove secrets from *all accessible history* if any exist, and never claim existing publicly released MIT code is secret. Do not force-push or rewrite history without a reviewed remediation plan.

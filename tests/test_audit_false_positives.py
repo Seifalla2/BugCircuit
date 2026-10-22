@@ -1,5 +1,4 @@
 """Regression tests for evidence-only repo analysis and accurate report versions."""
-import json
 import subprocess
 from pathlib import Path
 

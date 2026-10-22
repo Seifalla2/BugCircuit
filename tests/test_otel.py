@@ -7,7 +7,6 @@ from bugcircuit.analyze import analyze
 from bugcircuit.cli import main
 from bugcircuit.otel import read_otlp
 
-
 FIXTURE = Path(__file__).parent.parent / "examples/otel-errors.json"
 
 

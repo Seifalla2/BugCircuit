@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import json
 import re
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
 DEFAULT_PORT = 11434
 

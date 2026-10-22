@@ -60,7 +60,7 @@ async def _capture(url: str, allow_private: bool, wait_ms: int, check_layout: bo
                         await page.wait_for_timeout(75)
                         for ev in layout_events(await page.evaluate(LAYOUT_SCRIPT), viewport_name=str(width)):
                             record("layout", method=ev.method, error=ev.error)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - Playwright failures vary by platform
                 record("requestfailed", address=url, error=str(exc))
             finally:
                 await context.close()

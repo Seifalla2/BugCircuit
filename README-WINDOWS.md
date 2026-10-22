@@ -3,9 +3,9 @@
 **One-time setup**
 
 1. Install Python 3.10+ from [python.org](https://www.python.org/downloads/windows/) if you do not already have it. Select **Add Python to PATH**.
-2. In **GitHub Desktop**, choose **File → Clone repository → GitHub.com → Seifalla2/BugCircuit**. Select a local folder, then **Clone**. Keep the repo private.
+2. In **GitHub Desktop**, choose **File → Clone repository → GitHub.com → Seifalla2/BugCircuit**. Select a local folder, then **Clone**. The BugCircuit source repository is public; your own connected project folders and reports remain on your laptop.
 3. In GitHub Desktop choose **Repository → Show in Explorer** and double-click **`Start BugCircuit.cmd`**. On the first launch it creates an isolated `.venv` and installs the Python dependencies, then opens your browser automatically.
-4. Your dashboard is **http://127.0.0.1:8765/**. Bookmark the address. Keep the small server window open while using it.
+4. Your owner dashboard is **http://127.0.0.1:8765/**. For a synthetic portfolio presentation use **http://127.0.0.1:8765/showcase**. The showcase does not read connected project information or saved reports, but it shares a server with the owner workspace, so it is not an authentication boundary. Keep the small server window open while using it.
 
 **Optional:** Double-click `Enable Auto-start.cmd` once to start the server each time you sign in to Windows; `Disable Auto-start.cmd` removes this startup entry.
 

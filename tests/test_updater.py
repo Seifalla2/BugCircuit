@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -61,7 +61,7 @@ def test_update_to_new_clean_commit(repos):
 
 
 def test_wont_overwrite_dirty_checkout(repos):
-    source, bare, laptop = repos
+    _source, _bare, laptop = repos
     (laptop / "README.md").write_text("unsaved local change\n")
     update = updater.SafeUpdater(repo=laptop, git=shutil.which("git"))
     assert update.check() == ("local-changes", False)

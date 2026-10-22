@@ -1,5 +1,6 @@
-from pathlib import Path
 import json
+from pathlib import Path
+
 from bugcircuit.cli import main
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
